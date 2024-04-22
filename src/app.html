@@ -1,32 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Title Here</title>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width" />
     %sveltekit.head%
-    <!-- Add any additional meta tags, stylesheets, or scripts here -->
 </head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/about">About</a></li>
-                <!-- Add more navigation links here if needed -->
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        %sveltekit.body%
-        <!-- Your main content goes here -->
-    </main>
-
-    <footer>
-        <p>&copy; 2024 Your Company Name. All rights reserved.</p>
-    </footer>
-
-    <!-- Add any additional scripts here -->
+<body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
 </body>
 </html>
