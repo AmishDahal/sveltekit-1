@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Title Here</title>
+    %sveltekit.head%
     <!-- Add any additional meta tags, stylesheets, or scripts here -->
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Website</h1>
         <nav>
             <ul>
                 <li><a href="/">Home</a></li>
@@ -19,10 +19,8 @@
     </header>
 
     <main>
-        <section>
-            <h2>Section Title Here</h2>
-            <p>This is where your content goes. Feel free to add text, images, and other HTML elements.</p>
-        </section>
+        <!-- Your main content goes here -->
+        %sveltekit.body%
     </main>
 
     <footer>
