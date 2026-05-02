@@ -91,9 +91,7 @@
       text-transform: uppercase;
     }
 
-    button, input, select {
-      font: inherit;
-    }
+    button, input, select { font: inherit; }
 
     button {
       min-height: 40px;
@@ -107,6 +105,7 @@
     }
 
     button:hover { border-color: var(--accent); }
+
     button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
       outline: 3px solid var(--yellow);
       outline-offset: 3px;
@@ -118,7 +117,7 @@
       color: #ffffff;
     }
 
-    .template-grid, .mode-grid, .mini-grid {
+    .template-grid, .mode-grid, .mini-grid, .triple-grid {
       display: grid;
       gap: 8px;
     }
@@ -126,6 +125,7 @@
     .template-grid { grid-template-columns: repeat(3, 1fr); }
     .mode-grid { grid-template-columns: repeat(2, 1fr); margin-bottom: 12px; }
     .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .triple-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
     .field {
       display: grid;
@@ -143,6 +143,28 @@
       border-radius: 7px;
       padding: 7px 9px;
       background: #fff;
+    }
+
+    .field input[type="range"] { padding: 0; }
+
+    .compact-list {
+      display: grid;
+      gap: 6px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      color: #4a5663;
+      font-size: 13px;
+    }
+
+    .compact-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid #d8e0e8;
+      border-radius: 7px;
+      padding: 7px 9px;
+      background: #fafbfc;
     }
 
     .legend {
@@ -216,6 +238,24 @@
       background-size: 32px 32px;
     }
 
+    .tooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      max-width: 310px;
+      border: 1px solid #aeb9c4;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgb(255 255 255 / 96%);
+      box-shadow: 0 12px 30px rgb(18 25 35 / 16%);
+      color: #22303d;
+      font-size: 13px;
+      line-height: 1.45;
+      z-index: 4;
+    }
+
+    .tooltip strong { color: #111827; }
+
     .summary {
       display: grid;
       grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -260,7 +300,7 @@
     }
 
     @media (max-width: 560px) {
-      .template-grid, .mode-grid, .mini-grid, .summary { grid-template-columns: 1fr; }
+      .template-grid, .mode-grid, .mini-grid, .triple-grid, .summary { grid-template-columns: 1fr; }
       h1 { font-size: 24px; }
     }
   </style>
@@ -296,9 +336,17 @@
 
       <section class="panel">
         <h2>Loads and scale</h2>
-        <label class="field">Load magnitude
-          <input id="loadMag" type="range" min="10" max="90" value="45">
-          <span><output id="loadOut">45</output> kN downward</span>
+        <div class="mode-grid" id="loadEntryMode">
+          <button class="active" data-load-entry="scroll">Scroll</button>
+          <button data-load-entry="manual">Manual</button>
+        </div>
+        <label class="field" id="loadRangeField">Load magnitude
+          <input id="loadMag" type="range" min="-120" max="120" value="45">
+          <span><output id="loadOut">45</output> kN. Use the slider or mouse wheel over it.</span>
+        </label>
+        <label class="field" id="loadManualField" hidden>Manual load magnitude
+          <input id="loadManual" type="number" min="-120" max="120" value="45" step="5">
+          <span>Positive draws downward. Negative draws upward.</span>
         </label>
         <label class="field">Deformation scale
           <input id="deformScale" type="range" min="10" max="180" value="85">
@@ -311,6 +359,55 @@
             <option value="cantilever">Cantilever</option>
           </select>
         </label>
+      </section>
+
+      <section class="panel">
+        <h2>Add node</h2>
+        <div class="mini-grid">
+          <label class="field">X
+            <input id="nodeX" type="number" value="350" step="20">
+          </label>
+          <label class="field">Y
+            <input id="nodeY" type="number" value="235" step="20">
+          </label>
+        </div>
+        <button id="addNodeBtn">Add node</button>
+        <p class="hint">Coordinates use the drawing space. Added nodes can be used by new members and loads.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Add member</h2>
+        <div class="triple-grid">
+          <label class="field">From
+            <input id="memberFrom" type="number" value="1" min="1" step="1">
+          </label>
+          <label class="field">To
+            <input id="memberTo" type="number" value="2" min="1" step="1">
+          </label>
+          <label class="field">Type
+            <select id="memberKind">
+              <option value="bending">Frame</option>
+              <option value="tension">Tension</option>
+              <option value="compression">Compression</option>
+            </select>
+          </label>
+        </div>
+        <button id="addMemberBtn">Add member</button>
+        <ul class="compact-list" id="memberList"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Add load</h2>
+        <div class="mini-grid">
+          <label class="field">Node
+            <input id="loadNode" type="number" value="3" min="1" step="1">
+          </label>
+          <label class="field">Magnitude
+            <input id="extraLoadMag" type="number" value="20" step="5">
+          </label>
+        </div>
+        <button id="addLoadBtn">Add load</button>
+        <ul class="compact-list" id="loadList"></ul>
       </section>
 
       <section class="panel">
@@ -334,11 +431,12 @@
       </div>
       <section class="stage" aria-label="Structural model canvas">
         <canvas id="canvas"></canvas>
+        <div class="tooltip" id="tooltip"></div>
       </section>
       <section class="summary" aria-label="Analysis summary">
         <div class="metric"><strong>Max displacement</strong><span id="disp">0.00 mm</span></div>
         <div class="metric"><strong>Critical member</strong><span id="critical">M3 bending</span></div>
-        <div class="metric"><strong>Reaction</strong><span id="reaction">22.5 kN</span></div>
+        <div class="metric"><strong>Total load</strong><span id="reaction">45.0 kN</span></div>
         <div class="metric"><strong>Mode</strong><span id="modeLabel">Frame/beam</span></div>
       </section>
     </main>
@@ -347,7 +445,9 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
     const loadMag = document.getElementById('loadMag');
+    const loadManual = document.getElementById('loadManual');
     const loadOut = document.getElementById('loadOut');
     const deformScale = document.getElementById('deformScale');
     const supportType = document.getElementById('supportType');
@@ -357,35 +457,51 @@
     const criticalEl = document.getElementById('critical');
     const reactionEl = document.getElementById('reaction');
     const modeLabel = document.getElementById('modeLabel');
+    const memberList = document.getElementById('memberList');
+    const loadList = document.getElementById('loadList');
 
     const state = {
       template: 'beam',
       mode: 'frame',
       animating: false,
       phase: 0,
-      analyzed: false
+      analyzed: false,
+      nodes: [],
+      members: [],
+      loads: [],
+      hover: null
     };
 
-    const models = {
+    const templates = {
       beam: {
         nodes: [[100, 330], [220, 330], [340, 330], [460, 330], [580, 330]],
         members: [[0,1,'bending'], [1,2,'bending'], [2,3,'bending'], [3,4,'bending']],
-        loadNode: 2,
+        loads: [{ node: 2, value: 45, primary: true }],
         label: 'Continuous beam'
       },
       truss: {
         nodes: [[90, 330], [220, 330], [350, 330], [480, 330], [610, 330], [155, 175], [285, 175], [415, 175], [545, 175]],
         members: [[0,1,'compression'], [1,2,'tension'], [2,3,'compression'], [3,4,'tension'], [5,6,'compression'], [6,7,'tension'], [7,8,'compression'], [0,5,'tension'], [5,1,'compression'], [1,6,'tension'], [6,2,'compression'], [2,7,'tension'], [7,3,'compression'], [3,8,'tension'], [8,4,'compression']],
-        loadNode: 2,
+        loads: [{ node: 2, value: 45, primary: true }, { node: 3, value: 25, primary: false }],
         label: 'Warren truss'
       },
       frame: {
         nodes: [[140, 340], [140, 145], [350, 145], [560, 145], [560, 340]],
         members: [[0,1,'bending'], [1,2,'bending'], [2,3,'bending'], [3,4,'bending'], [1,3,'compression']],
-        loadNode: 3,
+        loads: [{ node: 3, value: 45, primary: true }],
         label: 'Portal frame'
       }
     };
+
+    function cloneTemplate(name) {
+      const template = templates[name];
+      state.nodes = template.nodes.map(([x, y], index) => ({ id: index + 1, x, y }));
+      state.members = template.members.map(([a, b, type], index) => ({ id: index + 1, a, b, type }));
+      state.loads = template.loads.map((load, index) => ({ id: index + 1, ...load }));
+      syncPrimaryLoad(Number(state.loads.find(load => load.primary)?.value || 45));
+      state.analyzed = false;
+      updateLists();
+    }
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -396,7 +512,8 @@
       draw();
     }
 
-    function colorFor(type) {
+    function colorFor(type, index) {
+      if (state.mode === 'truss' && type === 'bending') return index % 2 ? '#1f8a5b' : '#cb3b3b';
       if (type === 'tension') return '#1f8a5b';
       if (type === 'compression') return '#cb3b3b';
       return '#7154b8';
@@ -408,7 +525,42 @@
       const s = Math.min(sx, sy);
       const ox = (rect.width - 700 * s) / 2;
       const oy = (rect.height - 440 * s) / 2;
-      return [ox + point[0] * s, oy + point[1] * s];
+      return { x: ox + point.x * s, y: oy + point.y * s, scale: s };
+    }
+
+    function screenNodes() {
+      const rect = canvas.getBoundingClientRect();
+      return state.nodes.map(node => ({ ...node, ...transformPoint(node, rect) }));
+    }
+
+    function totalLoad() {
+      return state.loads.reduce((sum, load) => sum + Number(load.value || 0), 0);
+    }
+
+    function primaryLoad() {
+      return state.loads.find(load => load.primary) || state.loads[0];
+    }
+
+    function syncPrimaryLoad(value) {
+      const next = Math.max(-120, Math.min(120, Number(value) || 0));
+      const primary = primaryLoad();
+      if (primary) primary.value = next;
+      loadMag.value = next;
+      loadManual.value = next;
+      loadOut.value = next;
+      updateLists();
+    }
+
+    function memberLength(member) {
+      const a = state.nodes[member.a];
+      const b = state.nodes[member.b];
+      return Math.hypot(b.x - a.x, b.y - a.y) / 80;
+    }
+
+    function memberAngle(member) {
+      const a = state.nodes[member.a];
+      const b = state.nodes[member.b];
+      return Math.atan2(a.y - b.y, b.x - a.x) * 180 / Math.PI;
     }
 
     function drawGrid(rect) {
@@ -434,18 +586,22 @@
       ctx.fillText(text, x + 7, y - 6);
     }
 
-    function drawArrow(x, y, load) {
-      const len = Math.min(110, 42 + load * 0.8);
+    function drawArrow(x, y, load, offset = 0) {
+      const magnitude = Math.abs(load);
+      const downward = load >= 0;
+      const len = Math.min(110, 38 + magnitude * 0.7);
+      const tipY = downward ? y - 18 : y - 112;
+      const tailY = downward ? tipY - len : tipY + len;
       ctx.strokeStyle = '#0e5f6f';
       ctx.fillStyle = '#0e5f6f';
       ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(x, y - len); ctx.lineTo(x, y - 18); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + offset, tailY); ctx.lineTo(x + offset, tipY); ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x, y - 18);
-      ctx.lineTo(x - 10, y - 38);
-      ctx.lineTo(x + 10, y - 38);
+      ctx.moveTo(x + offset, tipY);
+      ctx.lineTo(x + offset - 10, tipY + (downward ? -20 : 20));
+      ctx.lineTo(x + offset + 10, tipY + (downward ? -20 : 20));
       ctx.closePath(); ctx.fill();
-      drawLabel(load + ' kN', x + 14, y - len + 8);
+      drawLabel(load + ' kN', x + offset + 14, Math.min(tailY, tipY) + 8);
     }
 
     function drawSupport(x, y, type, side) {
@@ -470,70 +626,167 @@
       const rect = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
       drawGrid(rect);
-      const model = models[state.template];
-      const points = model.nodes.map(p => transformPoint(p, rect));
-      const load = Number(loadMag.value);
+      const points = screenNodes();
       const deform = Number(deformScale.value) / 100;
       const loadOffset = state.animating ? Math.sin(state.phase) * 115 : 0;
 
-      model.members.forEach(([a, b, type], index) => {
-        const [x1, y1] = points[a];
-        const [x2, y2] = points[b];
-        const activeType = state.mode === 'truss' && type === 'bending' ? (index % 2 ? 'tension' : 'compression') : type;
-        ctx.strokeStyle = colorFor(activeType);
-        ctx.lineWidth = activeType === 'bending' ? 8 : 6;
+      state.members.forEach((member, index) => {
+        const a = points[member.a];
+        const b = points[member.b];
+        if (!a || !b) return;
+        const color = colorFor(member.type, index);
+        const isHover = state.hover?.type === 'member' && state.hover.item === member;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isHover ? 11 : member.type === 'bending' ? 8 : 6;
         ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-        if (state.analyzed) {
-          const midx = (x1 + x2) / 2;
-          const midy = (y1 + y2) / 2;
-          if (index < 5) drawLabel('M' + (index + 1), midx + 8, midy - 6);
-        }
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        if (state.analyzed || isHover) drawLabel('M' + member.id, (a.x + b.x) / 2 + 8, (a.y + b.y) / 2 - 6);
       });
 
-      if (state.analyzed) {
+      if (state.analyzed && points.length) {
         ctx.strokeStyle = '#111827';
         ctx.setLineDash([8, 6]);
         ctx.lineWidth = 3;
         ctx.beginPath();
-        points.forEach(([x, y], index) => {
-          const sag = Math.sin(index / Math.max(1, points.length - 1) * Math.PI) * load * deform * 0.35;
-          const px = x + (state.template === 'frame' && index === 3 ? load * 0.12 : 0);
-          const py = y + sag;
+        points.forEach((point, index) => {
+          const sag = Math.sin(index / Math.max(1, points.length - 1) * Math.PI) * Math.abs(totalLoad()) * deform * 0.12;
+          const px = point.x + (state.template === 'frame' && index === 3 ? totalLoad() * 0.08 : 0);
+          const py = point.y + sag;
           if (index === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         });
         ctx.stroke(); ctx.setLineDash([]);
       }
 
-      points.forEach(([x, y]) => {
-        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#111827'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      points.forEach(point => {
+        const isHover = state.hover?.type === 'node' && state.hover.item.id === point.id;
+        ctx.fillStyle = isHover ? '#f2b705' : '#ffffff';
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(point.x, point.y, isHover ? 10 : 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        if (isHover) drawLabel('N' + point.id, point.x + 12, point.y - 8);
       });
 
-      const first = points[0];
-      const last = points[points.length - 1];
-      drawSupport(first[0], first[1], supportType.value, 'left');
-      if (supportType.value !== 'cantilever') drawSupport(last[0], last[1], supportType.value, 'right');
+      if (points.length) {
+        const first = points[0];
+        const last = points[points.length - 1];
+        drawSupport(first.x, first.y, supportType.value, 'left');
+        if (supportType.value !== 'cantilever') drawSupport(last.x, last.y, supportType.value, 'right');
+      }
 
-      const loadPoint = points[model.loadNode];
-      drawArrow(loadPoint[0] + loadOffset, loadPoint[1], load);
+      state.loads.forEach(load => {
+        const point = points[load.node];
+        if (!point) return;
+        const offset = load.primary && state.animating ? loadOffset : 0;
+        drawArrow(point.x, point.y, Number(load.value || 0), offset);
+      });
     }
 
     function analyze() {
       state.analyzed = true;
-      const load = Number(loadMag.value);
+      const load = Math.abs(totalLoad());
       const factor = state.template === 'truss' ? 0.72 : state.template === 'frame' ? 1.12 : 1;
       const restraint = supportType.value === 'fixed-fixed' ? 0.55 : supportType.value === 'cantilever' ? 1.65 : 1;
       const displacement = load * factor * restraint / 6;
-      const reaction = supportType.value === 'cantilever' ? load : load / 2;
       const critical = state.template === 'truss' ? 'M7 compression' : state.template === 'frame' ? 'M2 bending' : 'M3 bending';
       dispEl.textContent = displacement.toFixed(2) + ' mm';
       criticalEl.textContent = critical;
-      reactionEl.textContent = reaction.toFixed(1) + ' kN';
+      reactionEl.textContent = totalLoad().toFixed(1) + ' kN';
       modeLabel.textContent = state.mode === 'truss' ? 'Truss axial' : 'Frame/beam';
-      readoutEl.textContent = models[state.template].label + ' analyzed';
-      statusEl.textContent = 'Analysis summary updated. Green members are tension, red members are compression, purple members are bending dominant.';
+      readoutEl.textContent = templates[state.template].label + ' analyzed';
+      statusEl.textContent = 'Hover nodes or members for details. Green is tension, red is compression, purple is bending dominant.';
       draw();
+    }
+
+    function updateLists() {
+      memberList.innerHTML = state.members.slice(-4).map(member => `<li><span>M${member.id}: N${member.a + 1}-N${member.b + 1}</span><strong>${member.type}</strong></li>`).join('');
+      loadList.innerHTML = state.loads.map(load => `<li><span>${load.primary ? 'Main' : 'L' + load.id}: N${load.node + 1}</span><strong>${load.value} kN</strong></li>`).join('');
+    }
+
+    function addNode() {
+      const x = Number(document.getElementById('nodeX').value);
+      const y = Number(document.getElementById('nodeY').value);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      state.nodes.push({ id: state.nodes.length + 1, x, y });
+      state.analyzed = false;
+      statusEl.textContent = `Added node N${state.nodes.length}. Use its number in the member or load form.`;
+      updateLists();
+      draw();
+    }
+
+    function addMember() {
+      const from = Number(document.getElementById('memberFrom').value) - 1;
+      const to = Number(document.getElementById('memberTo').value) - 1;
+      const type = document.getElementById('memberKind').value;
+      if (!state.nodes[from] || !state.nodes[to] || from === to) {
+        statusEl.textContent = 'Choose two valid node numbers to add a member.';
+        return;
+      }
+      state.members.push({ id: state.members.length + 1, a: from, b: to, type });
+      state.analyzed = false;
+      statusEl.textContent = `Added member M${state.members.length} between N${from + 1} and N${to + 1}.`;
+      updateLists();
+      draw();
+    }
+
+    function addLoad() {
+      const node = Number(document.getElementById('loadNode').value) - 1;
+      const value = Number(document.getElementById('extraLoadMag').value);
+      if (!state.nodes[node] || !Number.isFinite(value)) {
+        statusEl.textContent = 'Choose a valid node number and load magnitude.';
+        return;
+      }
+      state.loads.push({ id: state.loads.length + 1, node, value, primary: false });
+      state.analyzed = false;
+      statusEl.textContent = `Added ${value} kN load at N${node + 1}.`;
+      updateLists();
+      draw();
+    }
+
+    function hitTest(event) {
+      const rect = canvas.getBoundingClientRect();
+      const p = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const points = screenNodes();
+      for (const point of points) {
+        if (Math.hypot(p.x - point.x, p.y - point.y) < 14) return { type: 'node', item: point, p };
+      }
+      for (const member of state.members) {
+        const a = points[member.a];
+        const b = points[member.b];
+        if (!a || !b) continue;
+        if (distanceToSegment(p, a, b) < 9) return { type: 'member', item: member, p };
+      }
+      return { p };
+    }
+
+    function distanceToSegment(p, a, b) {
+      const vx = b.x - a.x;
+      const vy = b.y - a.y;
+      const wx = p.x - a.x;
+      const wy = p.y - a.y;
+      const c1 = vx * wx + vy * wy;
+      if (c1 <= 0) return Math.hypot(p.x - a.x, p.y - a.y);
+      const c2 = vx * vx + vy * vy;
+      if (c2 <= c1) return Math.hypot(p.x - b.x, p.y - b.y);
+      const t = c1 / c2;
+      return Math.hypot(p.x - (a.x + t * vx), p.y - (a.y + t * vy));
+    }
+
+    function tooltipHtml(hit) {
+      if (hit.type === 'node') {
+        const node = state.nodes[hit.item.id - 1];
+        const loads = state.loads.filter(load => load.node === hit.item.id - 1).map(load => load.value + ' kN').join(', ') || 'none';
+        const connected = state.members.filter(member => member.a === hit.item.id - 1 || member.b === hit.item.id - 1).map(member => 'M' + member.id).join(', ') || 'none';
+        return `<strong>N${hit.item.id}</strong><br>x: ${node.x.toFixed(0)}, y: ${node.y.toFixed(0)}<br>Connected: ${connected}<br>Loads: ${loads}<br>Support: ${hit.item.id === 1 ? 'left support' : hit.item.id === state.nodes.length && supportType.value !== 'cantilever' ? 'right support' : 'free joint'}`;
+      }
+      if (hit.type === 'member') {
+        const member = hit.item;
+        const length = memberLength(member);
+        const angle = memberAngle(member);
+        const loadShare = Math.abs(totalLoad()) / Math.max(1, state.members.length);
+        const behavior = state.mode === 'truss' ? (member.type === 'bending' ? 'axial approx.' : member.type) : member.type;
+        return `<strong>M${member.id}: N${member.a + 1}-N${member.b + 1}</strong><br>Type: ${behavior}<br>Length: ${length.toFixed(2)} model units<br>Angle: ${angle.toFixed(1)} deg<br>Estimated force: ${loadShare.toFixed(2)} kN<br>${state.analyzed ? 'Analysis view active' : 'Run analysis for deflected shape'}`;
+      }
+      return '';
     }
 
     document.getElementById('templates').addEventListener('click', event => {
@@ -542,9 +795,9 @@
       document.querySelectorAll('[data-template]').forEach(button => button.classList.toggle('active', button === event.target));
       state.mode = state.template === 'truss' ? 'truss' : 'frame';
       document.querySelectorAll('[data-mode]').forEach(button => button.classList.toggle('active', button.dataset.mode === state.mode));
-      state.analyzed = false;
-      readoutEl.textContent = models[state.template].label + ' ready';
-      statusEl.textContent = 'Template loaded. Adjust the load or run analysis.';
+      cloneTemplate(state.template);
+      readoutEl.textContent = templates[state.template].label + ' ready';
+      statusEl.textContent = 'Template loaded. Add loads/members or run analysis.';
       draw();
     });
 
@@ -557,16 +810,54 @@
       draw();
     });
 
+    document.getElementById('loadEntryMode').addEventListener('click', event => {
+      if (!event.target.dataset.loadEntry) return;
+      const manual = event.target.dataset.loadEntry === 'manual';
+      document.querySelectorAll('[data-load-entry]').forEach(button => button.classList.toggle('active', button === event.target));
+      document.getElementById('loadRangeField').hidden = manual;
+      document.getElementById('loadManualField').hidden = !manual;
+    });
+
     document.getElementById('analyzeBtn').addEventListener('click', analyze);
+    document.getElementById('addNodeBtn').addEventListener('click', addNode);
+    document.getElementById('addMemberBtn').addEventListener('click', addMember);
+    document.getElementById('addLoadBtn').addEventListener('click', addLoad);
     document.getElementById('animateBtn').addEventListener('click', () => {
       state.animating = !state.animating;
       document.getElementById('animateBtn').classList.toggle('active', state.animating);
       if (state.animating) animate();
     });
 
-    loadMag.addEventListener('input', () => { loadOut.value = loadMag.value; if (state.analyzed) analyze(); else draw(); });
+    loadMag.addEventListener('input', () => { syncPrimaryLoad(loadMag.value); if (state.analyzed) analyze(); else draw(); });
+    loadMag.addEventListener('wheel', event => {
+      event.preventDefault();
+      syncPrimaryLoad(Number(loadMag.value) + (event.deltaY < 0 ? 5 : -5));
+      if (state.analyzed) analyze(); else draw();
+    }, { passive: false });
+    loadManual.addEventListener('input', () => { syncPrimaryLoad(loadManual.value); if (state.analyzed) analyze(); else draw(); });
     deformScale.addEventListener('input', draw);
     supportType.addEventListener('change', () => { if (state.analyzed) analyze(); else draw(); });
+
+    canvas.addEventListener('mousemove', event => {
+      const hit = hitTest(event);
+      if (hit.type) {
+        state.hover = hit;
+        tooltip.innerHTML = tooltipHtml(hit);
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${hit.p.x + 18}px`;
+        tooltip.style.top = `${hit.p.y + 18}px`;
+      } else {
+        state.hover = null;
+        tooltip.style.display = 'none';
+      }
+      draw();
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      state.hover = null;
+      tooltip.style.display = 'none';
+      draw();
+    });
 
     function animate() {
       if (!state.animating) return;
@@ -576,6 +867,7 @@
     }
 
     window.addEventListener('resize', resize);
+    cloneTemplate('beam');
     resize();
   </script>
 </body>
