@@ -15,10 +15,10 @@
 				<a href="/">Home</a>
 			</li>
 			<li>
-				<a href="/#projects">Projects</a>
+				<a href="/#overview">About lab</a>
 			</li>
 			<li>
-				<a href="/#contact">Contact</a>
+				<a class="launch-link" href="/structure-lab.html">Launch Lab</a>
 			</li>
 		</ul>
 	</nav>
@@ -32,8 +32,8 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 1rem;
-		border-bottom: 1px solid rgb(23 103 90 / 16%);
-		background: rgb(255 255 255 / 82%);
+		border-bottom: 1px solid rgb(14 95 111 / 16%);
+		background: rgb(255 255 255 / 88%);
 		backdrop-filter: blur(14px);
 	}
 
@@ -70,7 +70,7 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 8px;
-		background: #17675a;
+		background: #0e5f6f;
 		color: #ffffff;
 		font-weight: 800;
 	}
@@ -95,10 +95,6 @@
 		list-style: none;
 	}
 
-	li {
-		position: relative;
-	}
-
 	nav a {
 		display: flex;
 		align-items: center;
@@ -113,8 +109,13 @@
 	li[aria-current='page'] a,
 	nav a:hover {
 		background: #e6f3ef;
-		color: #17675a;
+		color: #0e5f6f;
 		text-decoration: none;
+	}
+
+	nav a.launch-link {
+		background: #0e5f6f;
+		color: #ffffff;
 	}
 
 	a:focus-visible {
