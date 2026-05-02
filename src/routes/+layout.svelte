@@ -20,12 +20,12 @@
 <div class="app">
 	<Header />
 
-	<main>
+	<main id="main-content" tabindex="-1">
 		<slot />
 	</main>
 
 	<footer>
-		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
+		<p>Built for accessible engineering project updates.</p>
 	</footer>
 </div>
 
@@ -40,9 +40,9 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		padding: 1rem;
+		padding: 0 1rem;
 		width: 100%;
-		max-width: 64rem;
+		max-width: 72rem;
 		margin: 0 auto;
 		box-sizing: border-box;
 	}
@@ -52,16 +52,21 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		padding: 12px;
+		padding: 1.5rem 1rem;
+		color: #4c625d;
 	}
 
-	footer a {
-		font-weight: bold;
+	main:focus {
+		outline: none;
 	}
 
 	@media (min-width: 480px) {
 		footer {
-			padding: 12px 0;
+			padding: 1.5rem 0;
+		}
+
+		main {
+			padding-inline: 2rem;
 		}
 	}
 </style>
