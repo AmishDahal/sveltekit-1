@@ -34,7 +34,7 @@
 
     .app {
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
+      grid-template-columns: 370px minmax(0, 1fr);
       min-height: 100vh;
     }
 
@@ -73,7 +73,7 @@
       line-height: 1.5;
     }
 
-    .panel {
+    .panel, .import-box {
       margin-bottom: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -82,7 +82,14 @@
       box-shadow: 0 8px 22px rgb(18 25 35 / 5%);
     }
 
-    .panel h2 {
+    .import-box {
+      display: grid;
+      gap: 8px;
+      border-color: #b7d2d8;
+      background: #f8fcfb;
+    }
+
+    .panel h2, .import-box strong {
       margin-bottom: 12px;
       color: #43515e;
       font-size: 13px;
@@ -91,9 +98,11 @@
       text-transform: uppercase;
     }
 
+    .import-box strong { margin-bottom: 0; }
+
     button, input, select { font: inherit; }
 
-    button {
+    button, .file-button {
       min-height: 40px;
       border: 1px solid #b9c6cf;
       border-radius: 7px;
@@ -104,9 +113,9 @@
       font-weight: 750;
     }
 
-    button:hover { border-color: var(--accent); }
+    button:hover, .file-button:hover { border-color: var(--accent); }
 
-    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, .file-button:focus-within {
       outline: 3px solid var(--yellow);
       outline-offset: 3px;
     }
@@ -115,6 +124,21 @@
       border-color: var(--accent);
       background: var(--accent);
       color: #ffffff;
+    }
+
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .file-button input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .template-grid, .mode-grid, .mini-grid, .triple-grid {
@@ -242,7 +266,7 @@
       position: absolute;
       display: none;
       pointer-events: none;
-      max-width: 310px;
+      max-width: 330px;
       border: 1px solid #aeb9c4;
       border-radius: 8px;
       padding: 10px 12px;
@@ -258,7 +282,7 @@
 
     .summary {
       display: grid;
-      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
       gap: 10px;
       border-top: 1px solid var(--line);
       padding: 14px 18px;
@@ -284,6 +308,10 @@
     .metric span {
       font-size: 18px;
       font-weight: 850;
+    }
+
+    @media (max-width: 1120px) {
+      .summary { grid-template-columns: repeat(3, minmax(140px, 1fr)); }
     }
 
     @media (max-width: 980px) {
@@ -314,6 +342,13 @@
           <h1 id="lab-title">Structure Lab</h1>
           <p>Interactive beam, frame, and truss workspace for visual structural behavior.</p>
         </div>
+        <div class="import-box">
+          <strong>Upload model</strong>
+          <label class="file-button">Choose JSON / CSV file
+            <input id="modelFile" type="file" accept=".json,.csv,.txt,application/json,text/csv,text/plain">
+          </label>
+          <p class="hint">Use JSON with nodes/members/loads, or CSV rows like node,x,y, member,from,to,type, load,node,kN.</p>
+        </div>
       </section>
 
       <section class="panel">
@@ -341,11 +376,11 @@
           <button data-load-entry="manual">Manual</button>
         </div>
         <label class="field" id="loadRangeField">Load magnitude
-          <input id="loadMag" type="range" min="-120" max="120" value="45">
-          <span><output id="loadOut">45</output> kN. Use the slider or mouse wheel over it.</span>
+          <input id="loadMag" type="range" min="-500" max="500" value="45">
+          <span><output id="loadOut">45</output> kN. Slider is capped for control; manual can exceed it.</span>
         </label>
         <label class="field" id="loadManualField" hidden>Manual load magnitude
-          <input id="loadManual" type="number" min="-120" max="120" value="45" step="5">
+          <input id="loadManual" type="number" min="-5000" max="5000" value="45" step="5">
           <span>Positive draws downward. Negative draws upward.</span>
         </label>
         <label class="field">Deformation scale
@@ -413,20 +448,20 @@
       <section class="panel">
         <h2>Analysis</h2>
         <div class="mini-grid">
-          <button class="primary" id="analyzeBtn">Run analysis</button>
+          <button class="primary" id="analyzeBtn">Calculate AFD / SFD / BMD</button>
           <button id="animateBtn">Animate load</button>
         </div>
         <div class="legend" aria-label="Force color legend">
-          <span><i class="tension"></i>Tension</span>
-          <span><i class="compression"></i>Compression</span>
-          <span><i class="bending"></i>Bending dominant</span>
+          <span><i class="tension"></i>Tension / AFD</span>
+          <span><i class="compression"></i>Compression / SFD</span>
+          <span><i class="bending"></i>Bending / BMD</span>
         </div>
       </section>
     </aside>
 
     <main>
       <div class="topbar">
-        <div class="status" id="status">Choose a template, adjust the load, then run analysis.</div>
+        <div class="status" id="status">Choose a template, upload a file, or add members and loads manually.</div>
         <div class="readout" id="readout">Beam template ready</div>
       </div>
       <section class="stage" aria-label="Structural model canvas">
@@ -435,8 +470,10 @@
       </section>
       <section class="summary" aria-label="Analysis summary">
         <div class="metric"><strong>Max displacement</strong><span id="disp">0.00 mm</span></div>
-        <div class="metric"><strong>Critical member</strong><span id="critical">M3 bending</span></div>
-        <div class="metric"><strong>Total load</strong><span id="reaction">45.0 kN</span></div>
+        <div class="metric"><strong>Total load</strong><span id="totalLoadEl">45.0 kN</span></div>
+        <div class="metric"><strong>Max AFD</strong><span id="afdEl">0.0 kN</span></div>
+        <div class="metric"><strong>Max SFD</strong><span id="sfdEl">0.0 kN</span></div>
+        <div class="metric"><strong>Max BMD</strong><span id="bmdEl">0.0 kN-m</span></div>
         <div class="metric"><strong>Mode</strong><span id="modeLabel">Frame/beam</span></div>
       </section>
     </main>
@@ -454,14 +491,17 @@
     const statusEl = document.getElementById('status');
     const readoutEl = document.getElementById('readout');
     const dispEl = document.getElementById('disp');
-    const criticalEl = document.getElementById('critical');
-    const reactionEl = document.getElementById('reaction');
+    const totalLoadEl = document.getElementById('totalLoadEl');
+    const afdEl = document.getElementById('afdEl');
+    const sfdEl = document.getElementById('sfdEl');
+    const bmdEl = document.getElementById('bmdEl');
     const modeLabel = document.getElementById('modeLabel');
     const memberList = document.getElementById('memberList');
     const loadList = document.getElementById('loadList');
 
     const state = {
       template: 'beam',
+      modelName: 'Continuous beam',
       mode: 'frame',
       animating: false,
       phase: 0,
@@ -469,35 +509,39 @@
       nodes: [],
       members: [],
       loads: [],
-      hover: null
+      hover: null,
+      diagrams: null
     };
 
     const templates = {
       beam: {
+        name: 'Continuous beam',
         nodes: [[100, 330], [220, 330], [340, 330], [460, 330], [580, 330]],
         members: [[0,1,'bending'], [1,2,'bending'], [2,3,'bending'], [3,4,'bending']],
-        loads: [{ node: 2, value: 45, primary: true }],
-        label: 'Continuous beam'
+        loads: [{ node: 2, value: 45, primary: true }]
       },
       truss: {
+        name: 'Warren truss',
         nodes: [[90, 330], [220, 330], [350, 330], [480, 330], [610, 330], [155, 175], [285, 175], [415, 175], [545, 175]],
         members: [[0,1,'compression'], [1,2,'tension'], [2,3,'compression'], [3,4,'tension'], [5,6,'compression'], [6,7,'tension'], [7,8,'compression'], [0,5,'tension'], [5,1,'compression'], [1,6,'tension'], [6,2,'compression'], [2,7,'tension'], [7,3,'compression'], [3,8,'tension'], [8,4,'compression']],
-        loads: [{ node: 2, value: 45, primary: true }, { node: 3, value: 25, primary: false }],
-        label: 'Warren truss'
+        loads: [{ node: 2, value: 45, primary: true }, { node: 3, value: 25, primary: false }]
       },
       frame: {
+        name: 'Portal frame',
         nodes: [[140, 340], [140, 145], [350, 145], [560, 145], [560, 340]],
         members: [[0,1,'bending'], [1,2,'bending'], [2,3,'bending'], [3,4,'bending'], [1,3,'compression']],
-        loads: [{ node: 3, value: 45, primary: true }],
-        label: 'Portal frame'
+        loads: [{ node: 3, value: 45, primary: true }]
       }
     };
 
     function cloneTemplate(name) {
       const template = templates[name];
+      state.template = name;
+      state.modelName = template.name;
       state.nodes = template.nodes.map(([x, y], index) => ({ id: index + 1, x, y }));
       state.members = template.members.map(([a, b, type], index) => ({ id: index + 1, a, b, type }));
       state.loads = template.loads.map((load, index) => ({ id: index + 1, ...load }));
+      state.diagrams = null;
       syncPrimaryLoad(Number(state.loads.find(load => load.primary)?.value || 45));
       state.analyzed = false;
       updateLists();
@@ -506,8 +550,8 @@
     function resize() {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.max(720, Math.floor(rect.width * dpr));
-      canvas.height = Math.max(420, Math.floor(rect.height * dpr));
+      canvas.width = Math.max(760, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(460, Math.floor(rect.height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       draw();
     }
@@ -521,10 +565,10 @@
 
     function transformPoint(point, rect) {
       const sx = rect.width / 700;
-      const sy = rect.height / 440;
+      const sy = (rect.height - 120) / 440;
       const s = Math.min(sx, sy);
       const ox = (rect.width - 700 * s) / 2;
-      const oy = (rect.height - 440 * s) / 2;
+      const oy = 10 + (rect.height - 120 - 440 * s) / 2;
       return { x: ox + point.x * s, y: oy + point.y * s, scale: s };
     }
 
@@ -542,10 +586,10 @@
     }
 
     function syncPrimaryLoad(value) {
-      const next = Math.max(-120, Math.min(120, Number(value) || 0));
+      const next = Number(value) || 0;
       const primary = primaryLoad();
       if (primary) primary.value = next;
-      loadMag.value = next;
+      loadMag.value = Math.max(-500, Math.min(500, next));
       loadManual.value = next;
       loadOut.value = next;
       updateLists();
@@ -589,7 +633,7 @@
     function drawArrow(x, y, load, offset = 0) {
       const magnitude = Math.abs(load);
       const downward = load >= 0;
-      const len = Math.min(110, 38 + magnitude * 0.7);
+      const len = Math.min(115, 34 + Math.sqrt(magnitude) * 8);
       const tipY = downward ? y - 18 : y - 112;
       const tailY = downward ? tipY - len : tipY + len;
       ctx.strokeStyle = '#0e5f6f';
@@ -622,6 +666,37 @@
       }
     }
 
+    function drawForceDiagrams(rect) {
+      if (!state.diagrams) return;
+      const baseY = rect.height - 94;
+      const width = rect.width - 80;
+      const left = 40;
+      const diagrams = [
+        ['AFD', state.diagrams.afd, '#1f8a5b'],
+        ['SFD', state.diagrams.sfd, '#cb3b3b'],
+        ['BMD', state.diagrams.bmd, '#7154b8']
+      ];
+      diagrams.forEach(([label, values, color], row) => {
+        const y = baseY + row * 30;
+        const max = Math.max(1, ...values.map(v => Math.abs(v.value)));
+        ctx.strokeStyle = '#d5dee6';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        values.forEach((point, index) => {
+          const x = left + point.t * width;
+          const py = y - point.value / max * 14;
+          if (index === 0) ctx.moveTo(x, py); else ctx.lineTo(x, py);
+        });
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.font = '800 12px system-ui';
+        ctx.fillText(label, left, y - 16);
+      });
+    }
+
     function draw() {
       const rect = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, rect.width, rect.height);
@@ -649,8 +724,8 @@
         ctx.lineWidth = 3;
         ctx.beginPath();
         points.forEach((point, index) => {
-          const sag = Math.sin(index / Math.max(1, points.length - 1) * Math.PI) * Math.abs(totalLoad()) * deform * 0.12;
-          const px = point.x + (state.template === 'frame' && index === 3 ? totalLoad() * 0.08 : 0);
+          const sag = Math.sin(index / Math.max(1, points.length - 1) * Math.PI) * Math.abs(totalLoad()) * deform * 0.08;
+          const px = point.x + (state.template === 'frame' && index === 3 ? totalLoad() * 0.06 : 0);
           const py = point.y + sag;
           if (index === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         });
@@ -679,27 +754,63 @@
         const offset = load.primary && state.animating ? loadOffset : 0;
         drawArrow(point.x, point.y, Number(load.value || 0), offset);
       });
+
+      drawForceDiagrams(rect);
+    }
+
+    function calculateDiagrams() {
+      const xs = state.nodes.map(node => node.x);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const span = Math.max(1, maxX - minX);
+      const loads = state.loads.map(load => ({ x: state.nodes[load.node]?.x ?? minX, p: Number(load.value || 0) }));
+      const sumP = loads.reduce((sum, load) => sum + load.p, 0);
+      const rightReaction = supportType.value === 'cantilever' ? 0 : loads.reduce((sum, load) => sum + load.p * ((load.x - minX) / span), 0);
+      const leftReaction = sumP - rightReaction;
+      const sfd = [];
+      const bmd = [];
+      for (let i = 0; i <= 40; i++) {
+        const t = i / 40;
+        const x = minX + t * span;
+        const before = loads.filter(load => load.x <= x);
+        const shear = leftReaction - before.reduce((sum, load) => sum + load.p, 0);
+        const moment = leftReaction * (x - minX) / 80 - before.reduce((sum, load) => sum + load.p * (x - load.x) / 80, 0);
+        sfd.push({ t, value: shear });
+        bmd.push({ t, value: moment });
+      }
+      const afd = state.members.map((member, index) => {
+        const angle = Math.abs(Math.cos(memberAngle(member) * Math.PI / 180));
+        const sign = member.type === 'compression' ? -1 : 1;
+        return { t: state.members.length <= 1 ? 0 : index / (state.members.length - 1), value: sign * Math.abs(sumP) * (0.25 + angle) / Math.max(1, state.members.length) };
+      });
+      return { afd: afd.length ? afd : [{ t: 0, value: 0 }, { t: 1, value: 0 }], sfd, bmd, leftReaction, rightReaction };
     }
 
     function analyze() {
       state.analyzed = true;
+      state.diagrams = calculateDiagrams();
       const load = Math.abs(totalLoad());
       const factor = state.template === 'truss' ? 0.72 : state.template === 'frame' ? 1.12 : 1;
       const restraint = supportType.value === 'fixed-fixed' ? 0.55 : supportType.value === 'cantilever' ? 1.65 : 1;
       const displacement = load * factor * restraint / 6;
-      const critical = state.template === 'truss' ? 'M7 compression' : state.template === 'frame' ? 'M2 bending' : 'M3 bending';
+      const maxAfd = Math.max(0, ...state.diagrams.afd.map(point => Math.abs(point.value)));
+      const maxSfd = Math.max(0, ...state.diagrams.sfd.map(point => Math.abs(point.value)));
+      const maxBmd = Math.max(0, ...state.diagrams.bmd.map(point => Math.abs(point.value)));
       dispEl.textContent = displacement.toFixed(2) + ' mm';
-      criticalEl.textContent = critical;
-      reactionEl.textContent = totalLoad().toFixed(1) + ' kN';
+      totalLoadEl.textContent = totalLoad().toFixed(1) + ' kN';
+      afdEl.textContent = maxAfd.toFixed(1) + ' kN';
+      sfdEl.textContent = maxSfd.toFixed(1) + ' kN';
+      bmdEl.textContent = maxBmd.toFixed(1) + ' kN-m';
       modeLabel.textContent = state.mode === 'truss' ? 'Truss axial' : 'Frame/beam';
-      readoutEl.textContent = templates[state.template].label + ' analyzed';
-      statusEl.textContent = 'Hover nodes or members for details. Green is tension, red is compression, purple is bending dominant.';
+      readoutEl.textContent = state.modelName + ' calculated';
+      statusEl.textContent = 'AFD/SFD/BMD diagrams are shown at the bottom of the canvas. Hover nodes or members for details.';
       draw();
     }
 
     function updateLists() {
       memberList.innerHTML = state.members.slice(-4).map(member => `<li><span>M${member.id}: N${member.a + 1}-N${member.b + 1}</span><strong>${member.type}</strong></li>`).join('');
       loadList.innerHTML = state.loads.map(load => `<li><span>${load.primary ? 'Main' : 'L' + load.id}: N${load.node + 1}</span><strong>${load.value} kN</strong></li>`).join('');
+      totalLoadEl.textContent = totalLoad().toFixed(1) + ' kN';
     }
 
     function addNode() {
@@ -742,6 +853,52 @@
       draw();
     }
 
+    function importModel(model) {
+      const nodes = (model.nodes || []).map((node, index) => ({ id: index + 1, x: Number(node.x ?? node[0]), y: Number(node.y ?? node[1]) })).filter(node => Number.isFinite(node.x) && Number.isFinite(node.y));
+      const members = (model.members || []).map((member, index) => ({
+        id: index + 1,
+        a: Math.max(0, Number(member.from ?? member.a ?? member[0]) - 1),
+        b: Math.max(0, Number(member.to ?? member.b ?? member[1]) - 1),
+        type: member.type ?? member[2] ?? 'bending'
+      })).filter(member => nodes[member.a] && nodes[member.b] && member.a !== member.b);
+      const loads = (model.loads || []).map((load, index) => ({
+        id: index + 1,
+        node: Math.max(0, Number(load.node ?? load[0]) - 1),
+        value: Number(load.value ?? load.kN ?? load[1]),
+        primary: index === 0
+      })).filter(load => nodes[load.node] && Number.isFinite(load.value));
+      if (nodes.length < 2 || members.length < 1) throw new Error('File needs at least two nodes and one member.');
+      state.nodes = nodes;
+      state.members = members;
+      state.loads = loads.length ? loads : [{ id: 1, node: 0, value: 0, primary: true }];
+      state.modelName = model.name || 'Uploaded model';
+      state.template = 'uploaded';
+      state.mode = model.mode === 'truss' ? 'truss' : 'frame';
+      supportType.value = model.support || supportType.value;
+      state.analyzed = false;
+      state.diagrams = null;
+      syncPrimaryLoad(state.loads[0].value);
+      updateLists();
+      readoutEl.textContent = state.modelName + ' loaded';
+      statusEl.textContent = 'Uploaded model loaded. Press Calculate AFD / SFD / BMD.';
+      draw();
+    }
+
+    function parseCsv(text) {
+      const model = { name: 'Uploaded CSV model', nodes: [], members: [], loads: [] };
+      text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).forEach(line => {
+        const parts = line.split(',').map(part => part.trim());
+        const kind = parts[0]?.toLowerCase();
+        if (kind === 'name') model.name = parts.slice(1).join(', ') || model.name;
+        if (kind === 'support') model.support = parts[1];
+        if (kind === 'mode') model.mode = parts[1];
+        if (kind === 'node') model.nodes.push({ x: Number(parts[1]), y: Number(parts[2]) });
+        if (kind === 'member') model.members.push({ from: Number(parts[1]), to: Number(parts[2]), type: parts[3] || 'bending' });
+        if (kind === 'load') model.loads.push({ node: Number(parts[1]), value: Number(parts[2]) });
+      });
+      return model;
+    }
+
     function hitTest(event) {
       const rect = canvas.getBoundingClientRect();
       const p = { x: event.clientX - rect.left, y: event.clientY - rect.top };
@@ -782,22 +939,22 @@
         const member = hit.item;
         const length = memberLength(member);
         const angle = memberAngle(member);
-        const loadShare = Math.abs(totalLoad()) / Math.max(1, state.members.length);
+        const diagrams = state.diagrams || calculateDiagrams();
+        const axial = diagrams.afd[Math.min(member.id - 1, diagrams.afd.length - 1)]?.value || 0;
         const behavior = state.mode === 'truss' ? (member.type === 'bending' ? 'axial approx.' : member.type) : member.type;
-        return `<strong>M${member.id}: N${member.a + 1}-N${member.b + 1}</strong><br>Type: ${behavior}<br>Length: ${length.toFixed(2)} model units<br>Angle: ${angle.toFixed(1)} deg<br>Estimated force: ${loadShare.toFixed(2)} kN<br>${state.analyzed ? 'Analysis view active' : 'Run analysis for deflected shape'}`;
+        return `<strong>M${member.id}: N${member.a + 1}-N${member.b + 1}</strong><br>Type: ${behavior}<br>Length: ${length.toFixed(2)} model units<br>Angle: ${angle.toFixed(1)} deg<br>AFD estimate: ${axial.toFixed(2)} kN<br>${state.analyzed ? 'AFD/SFD/BMD calculated' : 'Run analysis for diagrams'}`;
       }
       return '';
     }
 
     document.getElementById('templates').addEventListener('click', event => {
       if (!event.target.dataset.template) return;
-      state.template = event.target.dataset.template;
       document.querySelectorAll('[data-template]').forEach(button => button.classList.toggle('active', button === event.target));
-      state.mode = state.template === 'truss' ? 'truss' : 'frame';
+      state.mode = event.target.dataset.template === 'truss' ? 'truss' : 'frame';
       document.querySelectorAll('[data-mode]').forEach(button => button.classList.toggle('active', button.dataset.mode === state.mode));
-      cloneTemplate(state.template);
-      readoutEl.textContent = templates[state.template].label + ' ready';
-      statusEl.textContent = 'Template loaded. Add loads/members or run analysis.';
+      cloneTemplate(event.target.dataset.template);
+      readoutEl.textContent = state.modelName + ' ready';
+      statusEl.textContent = 'Template loaded. Add loads/members, upload a model, or calculate diagrams.';
       draw();
     });
 
@@ -828,10 +985,22 @@
       if (state.animating) animate();
     });
 
+    document.getElementById('modelFile').addEventListener('change', async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const model = file.name.endsWith('.json') ? JSON.parse(text) : parseCsv(text);
+        importModel(model);
+      } catch (error) {
+        statusEl.textContent = 'Could not import file: ' + error.message;
+      }
+    });
+
     loadMag.addEventListener('input', () => { syncPrimaryLoad(loadMag.value); if (state.analyzed) analyze(); else draw(); });
     loadMag.addEventListener('wheel', event => {
       event.preventDefault();
-      syncPrimaryLoad(Number(loadMag.value) + (event.deltaY < 0 ? 5 : -5));
+      syncPrimaryLoad(Number(loadManual.value) + (event.deltaY < 0 ? 10 : -10));
       if (state.analyzed) analyze(); else draw();
     }, { passive: false });
     loadManual.addEventListener('input', () => { syncPrimaryLoad(loadManual.value); if (state.analyzed) analyze(); else draw(); });
