@@ -25,7 +25,7 @@
 	</main>
 
 	<footer>
-		<p>Built for accessible engineering project updates.</p>
+		<p>Portfolio of Amish Dahal: projects, interests, and things still in progress.</p>
 	</footer>
 </div>
 
@@ -54,6 +54,7 @@
 		align-items: center;
 		padding: 1.5rem 1rem;
 		color: #4c625d;
+		text-align: center;
 	}
 
 	main:focus {
