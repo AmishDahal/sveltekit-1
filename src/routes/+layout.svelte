@@ -25,7 +25,7 @@
 	</main>
 
 	<footer>
-		<p>Portfolio of Amish Dahal: projects, interests, and things still in progress.</p>
+		<p>Amish Dahal / movies, engineering ideas, web projects, and unfinished builds.</p>
 	</footer>
 </div>
 
@@ -52,9 +52,14 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
+		border-top: 1px solid rgb(255 255 255 / 10%);
 		padding: 1.5rem 1rem;
-		color: #4c625d;
+		color: #9ca3af;
 		text-align: center;
+	}
+
+	footer p {
+		margin: 0;
 	}
 
 	main:focus {
