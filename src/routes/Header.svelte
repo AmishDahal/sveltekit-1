@@ -32,28 +32,31 @@
 
 <style>
 	header {
+		position: sticky;
+		top: 0;
+		z-index: 20;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 1rem;
 		align-items: center;
 		justify-content: space-between;
-		padding: 1rem;
-		border-bottom: 1px solid rgb(31 111 120 / 16%);
-		background: rgb(255 255 255 / 88%);
-		backdrop-filter: blur(14px);
+		padding: 0.85rem 1rem;
+		border-bottom: 1px solid rgb(255 255 255 / 10%);
+		background: rgb(9 11 16 / 82%);
+		backdrop-filter: blur(18px);
 	}
 
 	.skip-link {
 		position: absolute;
 		left: 1rem;
 		top: 0.5rem;
-		z-index: 10;
+		z-index: 30;
 		transform: translateY(-150%);
 		border-radius: 6px;
 		padding: 0.65rem 0.85rem;
-		background: #151515;
-		color: #ffffff;
-		font-weight: 750;
+		background: #f4b35e;
+		color: #111827;
+		font-weight: 850;
 		text-decoration: none;
 	}
 
@@ -65,20 +68,21 @@
 		display: flex;
 		align-items: center;
 		gap: 0.7rem;
-		color: #151515;
+		color: #ffffff;
 		text-decoration: none;
 	}
 
 	.brand span {
 		display: inline-flex;
-		width: 2.5rem;
-		height: 2.5rem;
+		width: 2.45rem;
+		height: 2.45rem;
 		align-items: center;
 		justify-content: center;
+		border: 1px solid rgb(244 179 94 / 70%);
 		border-radius: 8px;
-		background: #1f6f78;
-		color: #ffffff;
-		font-weight: 800;
+		background: rgb(244 179 94 / 14%);
+		color: #f4b35e;
+		font-weight: 900;
 	}
 
 	.brand strong {
@@ -104,34 +108,35 @@
 	nav a {
 		display: flex;
 		align-items: center;
-		min-height: 2.5rem;
-		border-radius: 6px;
-		padding: 0 0.8rem;
-		color: #263f39;
-		font-weight: 700;
+		min-height: 2.35rem;
+		border-radius: 8px;
+		padding: 0 0.78rem;
+		color: #d1d5db;
+		font-size: 0.92rem;
+		font-weight: 760;
 		text-decoration: none;
 	}
 
 	li[aria-current='page'] a,
 	nav a:hover {
-		background: #eef3f5;
-		color: #1f6f78;
+		background: rgb(255 255 255 / 9%);
+		color: #ffffff;
 		text-decoration: none;
 	}
 
 	nav a.launch-link {
-		background: #1f6f78;
-		color: #ffffff;
+		background: #f4b35e;
+		color: #111827;
 	}
 
 	a:focus-visible {
-		outline: 3px solid #f2b705;
+		outline: 3px solid #67e8f9;
 		outline-offset: 3px;
 	}
 
 	@media (min-width: 720px) {
 		header {
-			padding: 1rem 2rem;
+			padding: 0.85rem 2rem;
 		}
 	}
 </style>
