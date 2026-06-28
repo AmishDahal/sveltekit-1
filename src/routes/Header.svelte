@@ -15,10 +15,16 @@
 				<a href="/">Home</a>
 			</li>
 			<li>
-				<a href="/#overview">About lab</a>
+				<a href="/#about">About</a>
 			</li>
 			<li>
-				<a class="launch-link" href="/structure-lab.html">Launch Lab</a>
+				<a href="/#interests">Interests</a>
+			</li>
+			<li>
+				<a href="/#projects">Projects</a>
+			</li>
+			<li>
+				<a class="launch-link" href="/structure-lab.html">Structure Lab</a>
 			</li>
 		</ul>
 	</nav>
@@ -32,7 +38,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 1rem;
-		border-bottom: 1px solid rgb(14 95 111 / 16%);
+		border-bottom: 1px solid rgb(31 111 120 / 16%);
 		background: rgb(255 255 255 / 88%);
 		backdrop-filter: blur(14px);
 	}
@@ -45,7 +51,7 @@
 		transform: translateY(-150%);
 		border-radius: 6px;
 		padding: 0.65rem 0.85rem;
-		background: #10221f;
+		background: #151515;
 		color: #ffffff;
 		font-weight: 750;
 		text-decoration: none;
@@ -59,7 +65,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.7rem;
-		color: #10221f;
+		color: #151515;
 		text-decoration: none;
 	}
 
@@ -70,7 +76,7 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 8px;
-		background: #0e5f6f;
+		background: #1f6f78;
 		color: #ffffff;
 		font-weight: 800;
 	}
@@ -108,13 +114,13 @@
 
 	li[aria-current='page'] a,
 	nav a:hover {
-		background: #e6f3ef;
-		color: #0e5f6f;
+		background: #eef3f5;
+		color: #1f6f78;
 		text-decoration: none;
 	}
 
 	nav a.launch-link {
-		background: #0e5f6f;
+		background: #1f6f78;
 		color: #ffffff;
 	}
 
